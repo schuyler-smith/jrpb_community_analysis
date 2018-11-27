@@ -1,0 +1,52 @@
+---
+title: "Bacteria Co-Occurrence"
+---
+
+```{r setup, include=FALSE}
+set.seed(1390)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_packages, message = FALSE, warning = FALSE}
+library(phyloseq, warn.conflicts = FALSE)
+```
+
+The data was received from Dr. Vannette that was currated using her analysis pipeline implemented for the original paper. The phyloseq object contains all the metadata, as well as the rarefied otu counts, taxonomic classifications, and a phylogenetic tree. Additional data is publicly available at [Dryad][vannette_data].
+
+[vannette_data]: https://datadryad.org/resource/doi:10.5061/dryad.75b30
+
+```{r load_data}
+phylo_data <- readRDS("data/rare_b.rds")
+otus <- as(otu_table(phylo_data), "matrix")
+colnames(otus) <- paste("X",colnames(otus), sep="")
+```
+
+## Sample Data
+
+Sample names were numerical, which R does not always work well with, and so an 'X' is prepended to each by R automatically, and I kept that nomenclature.
+
+```{r}
+si <- sample_data(phylo_data)
+rownames(si) <- paste("X", si$Flower.ID, sep="")
+```
+
+## Filter Generalists
+
+Generalists are species that occur regardless of environmental condiitons, or are hardy enough to resist environmental changes. When looking at co-occurrences, the relationship between generalists and specialists (species that occur in specific conditiions) can give false associations. For this, I wrote a function to filter by each treatment group by percent of samples that an otu is seen in. The function is included in the scripts folder, but I hope to either add a page about how it is working here later or another site hosting microbiome functions.
+
+```{r phyloseq, message=FALSE}
+source("scripts/find_phyloseq_generalists.R")
+generalists <- find_generalists(phylo_data, 0.1, "Treatment")
+```
+
+## Co-Ocurrence
+
+Cooccurrence is run in and outside program, written in C++ by a member of our lab [FastCoOccur][fastco]. It uses Spearman's rank correlation and requires a specific input style created here.
+
+```{r co_ocurrence}
+trt <- as.character(sample_data(generalists)$Treatment)
+f_table <- cbind(trt, t(otu_table(generalists)))
+write.csv(f_table, "data/bacteria/bac_fcoocurr_input.csv")
+```
+
+[fastco]: https://github.com/germs-lab/FastCoOccur

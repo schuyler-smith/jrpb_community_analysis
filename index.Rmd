@@ -1,0 +1,29 @@
+---
+title: "JRBP Community Analysis"
+---
+
+Network analysis based on data collected in the paper [*Dispersal enhances beta diversity in nectar microbes*][vannette_paper] by Rachel L. Vannette and Tadashi Fukami. 
+
+Work presented here conducted in collaboration between [Paul Villanueva][paul_github] and [Schuyler Smith][schuyler_github].
+
+## About
+
+The purpose of this website is to display and demonstrate our ideas and workflows for analyzing this data. If you have any advice, we'd love to have it. If you like anything we did, feel free to reuse it! Originally we had ideas to show the workflow and methods for analyzing bacteria and yeast samples. We ran into some complications with the data. Here we have only the bacteria, and it has been rarefied prior to our analysis, which has limited some processing steps from being demonstrated here, but we can still show the co-occurence prep and network analyses.
+
+## Bac Co-Occur Prep
+
+In this section we show the workflow in R to create a phyloseq object with the data for the bacterial OTUs and then format it for use with the Co-Occurrence program [FastCoOccur][fastco].
+
+## Bacteria Community Analysis
+
+We used the co-occurence $\rho$ values for edges of networks built using the `igraph` package in R.
+
+## Contact
+
+Send questions, comments, and feedback to pev at iastate dot edu.
+and/or to sdsmith at iastate dot edu.
+
+[vannette_paper]: https://doi.org/10.1111/ele.12787
+[schuyler_github]: https://github.com/sdsmith1390
+[paul_github]: https://github.com/pommevilla
+[fastco]: https://github.com/germs-lab/FastCoOccur

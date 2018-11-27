@@ -1,0 +1,27 @@
+name: JRBP Community Analysis
+output_dir: docs
+navbar:
+  title: ''
+  left:
+  - text: Project Overview
+    href: index.html
+  - text: Co-Occurrence
+    href: bacteria_cooccurr_prep.html
+  - text: Microbiome Analysis
+    href: bacteria_microbiome_analysis.html
+  - text: Network Analysis
+    href: bacteria_network_analysis.html
+
+    
+output:
+  html_document:
+    theme: cerulean
+    include:
+      after_body: misc/footer.html
+    toc: yes
+    toc_float:
+      smooth_scroll: yes
+      collapsed: no
+    lib_dir: site_libs
+    self_contained: no
+

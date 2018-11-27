@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Bacteria Network Analysis</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cerulean.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Project Overview</a>
+</li>
+<li>
+  <a href="bacteria_cooccurr_prep.html">Co-Occurrence</a>
+</li>
+<li>
+  <a href="bacteria_microbiome_analysis.html">Microbiome Analysis</a>
+</li>
+<li>
+  <a href="bacteria_network_analysis.html">Network Analysis</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Bacteria Network Analysis</h1>
+
+</div>
+
+
+<script>
+$(document).ready(function() {
+  $items = $('div#TOC li');
+  $items.each(function(idx) {
+    num_ul = $(this).parentsUntil('#TOC').length;
+    $(this).css({'text-indent': num_ul * 10, 'padding-left': 0});
+  });
+});
+</script>
+<pre class="r"><code>library(data.table, warn.conflicts = FALSE)
+library(igraph, warn.conflicts = FALSE)
+library(phyloseq, warn.conflicts = FALSE)</code></pre>
+<div id="data-preparation" class="section level2">
+<h2>Data Preparation</h2>
+<p><code>taxa</code> is the look-up table for the OTUs. <code>cooccurrence_data</code> contains pairwise-Spearman correlation ranks for pairs of OTUs.</p>
+<pre class="r"><code>phylo_data &lt;- readRDS(&quot;data/rare_b.rds&quot;)
+taxa &lt;- tax_table(phylo_data)
+cooccurrence_data &lt;- data.table(read.table(&quot;data/bacteria/bacteria_cooccurrence.tsv&quot;, 
+                                           col.names = c(&quot;treatment&quot;, &quot;OTU_1&quot;, &quot;OTU_2&quot;, &quot;rho&quot;, &quot;p&quot;)))</code></pre>
+<p>We process <code>coocurrence_data</code> by removing OTU interactions with non-significant <span class="math inline">\(\rho\)</span> values by filtering out those with a <span class="math inline">\(p\)</span>-value less than <span class="math inline">\(0.05\)</span>, then filtering out cyanobacteria and choloroplast data, as well as all observations from bird samples:</p>
+<pre class="r"><code>cooccurrence_data &lt;- cooccurrence_data[p &lt;= 0.1, -5]      # Remove p-values from table
+cooccurrence_data &lt;- cooccurrence_data[order(treatment, OTU_1, OTU_2)]
+taxa &lt;- subset_taxa(taxa, !(Order %in% c(&quot;Cyanobacteria&quot;,&quot;Chloroplast&quot;)))
+complete_data &lt;- cooccurrence_data[OTU_1 %in% rownames(taxa) | OTU_2 %in% rownames(taxa)]
+
+bird_data &lt;- cooccurrence_data[treatment == &quot;Bird&quot;, ]
+complete_data &lt;- cooccurrence_data[treatment != &quot;Bird&quot;, ]</code></pre>
+<p>We can then remove all edges that are <span class="math inline">\(\textit{not}\)</span> connected to the indicated OTUs of interest:</p>
+<pre class="r"><code>otus_of_interest &lt;- c(&quot;Acinetobacter&quot;, &quot;Gluconobacter&quot;, &quot;Neokomagataea&quot;, &quot;erwinia&quot;, &quot;Pantoea&quot;, &quot;resenbergiella&quot;, &quot;Asaia&quot;, &quot;Lactobacillus&quot;, &quot;Pseudomonas&quot;)
+otus_of_interest &lt;- taxa[apply(taxa, 1, FUN = function(x){any(x %in% otus_of_interest)}),]
+trimmed_data &lt;- cooccurrence_data[OTU_1 %in% rownames(otus_of_interest) | OTU_2 %in% rownames(otus_of_interest)]</code></pre>
+<p>We seperate the coocurrence data into a positive and negative group, as we can’t give equal weight between the two types of associations.</p>
+<pre class="r"><code>trimmed_positive_weights &lt;- trimmed_data[trimmed_data[[&#39;rho&#39;]] &gt; 0]</code></pre>
+<pre class="r"><code>trimmed_negative_weights &lt;- trimmed_data[trimmed_data[[&#39;rho&#39;]] &lt; 0]</code></pre>
+<p>We’ll look at the positive and negative networks for each of the three treatments, as well as when all the treatments are combined together.</p>
+</div>
+<div id="networks-for-species-of-interest" class="section level2">
+<h2>Networks for Species of Interest</h2>
+<div id="positive-weights" class="section level3">
+<h3>Positive weights</h3>
+<p>We create a directed graph weighted by Spearman correlation for the Exposed treatment for those OTUs that are positively correlated to each other:</p>
+<pre class="r"><code>exposed_data_positive &lt;- trimmed_positive_weights[treatment == &quot;Exposed&quot;][,-1]
+gr_exposed_positive &lt;- graph.data.frame(exposed_data_positive, directed = FALSE)
+plot(gr_exposed_positive, vertex.size = 3,
+     vertex.label = NA)</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/tep.1-1.png" width="1152" /></p>
+<pre class="r"><code>caged_data_positive &lt;- trimmed_positive_weights[treatment == &quot;Caged&quot;][,-1]
+gr_caged_positive &lt;- graph.data.frame(caged_data_positive, directed = FALSE)
+bagged_data_positive &lt;- trimmed_positive_weights[treatment == &quot;Bagged&quot;][,-1]
+gr_bagged_positive &lt;- graph.data.frame(bagged_data_positive, directed = FALSE)</code></pre>
+<p>To determine communities, we use <code>cluster_fast_greedy</code>, which does greedy (local) optimization of the graph’s modularity score. For each of the communities, we list the highest degree OTU within that community, as well as the other OTUs within it.</p>
+<pre class="r"><code>graph_hot_otus &lt;- function(graph_object){
+  communities_object &lt;- cluster_fast_greedy(graph_object, weights = E(graph_object)$rho)
+  hot_otus &lt;- vector
+  for (community in communities(communities_object)){
+    sub_graph &lt;- induced.subgraph(graph = graph_object, 
+                                    v = community, impl = &quot;auto&quot;)
+    highest_degree_otu &lt;- V(sub_graph)[which.max(degree(sub_graph))]$name
+    hot_otus &lt;- c(hot_otus, highest_degree_otu)
+    print(paste(&quot;Highest degree OTU was&quot;, highest_degree_otu, &quot;(degree =&quot;,  
+              degree(sub_graph, highest_degree_otu), &quot;):&quot;))
+  }
+  plot(communities_object, graph_object, 
+     layout = layout.fruchterman.reingold(graph_object),
+     rescaled = TRUE,
+     vertex.size = ifelse(V(graph_object) %in% hot_otus, 5, 1), 
+     vertex.label = ifelse(V(graph_object) %in% hot_otus, V(graph_object)$id, NA),
+     vertex.label.cex = 2
+     )
+  return(paste(&quot;modularity of graph = &quot;, modularity(graph_object, membership(communities_object)), sep=&quot;&quot;))
+}</code></pre>
+<pre class="r"><code>graph_hot_otus(gr_exposed_positive)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_4191 (degree = 12 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_20 (degree = 19 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_21 (degree = 30 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_66 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_9 (degree = 7 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/positive_graphs-1.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.446036097345896&quot;</code></pre>
+<pre class="r"><code>graph_hot_otus(gr_bagged_positive)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_18 (degree = 15 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_21 (degree = 27 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5823 (degree = 16 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4036 (degree = 3 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/positive_graphs-2.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.491073199761952&quot;</code></pre>
+<pre class="r"><code>graph_hot_otus(gr_caged_positive)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_64 (degree = 30 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_44 (degree = 14 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4036 (degree = 13 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_3646 (degree = 11 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5600 (degree = 6 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/positive_graphs-3.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.403231500562393&quot;</code></pre>
+</div>
+<div id="negative-weights" class="section level3">
+<h3>Negative Weights</h3>
+<p>We repeat the above process for the negatively correlated OTUs:</p>
+<pre class="r"><code>exposed_data_negative &lt;- trimmed_negative_weights[treatment == &quot;Exposed&quot;][, -1]
+exposed_data_negative[[3]] &lt;- abs(exposed_data_negative[[3]])
+gr_exposed_negative &lt;- graph.data.frame(exposed_data_negative, directed = FALSE)
+
+bagged_data_negative &lt;- trimmed_negative_weights[treatment == &quot;Bagged&quot;][, -1]
+bagged_data_negative[[3]] &lt;- abs(bagged_data_negative[[3]])
+gr_bagged_negative &lt;- graph.data.frame(bagged_data_negative, directed = FALSE)
+
+caged_data_negative &lt;- trimmed_negative_weights[treatment == &quot;Caged&quot;][, -1]
+caged_data_negative[[3]] &lt;- abs(caged_data_negative[[3]])
+gr_caged_negative &lt;- graph.data.frame(caged_data_negative, directed = FALSE)</code></pre>
+<pre class="r"><code>hot_otus &lt;- graph_hot_otus(gr_exposed_negative)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_21 (degree = 5 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4337 (degree = 4 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_6 (degree = 14 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_3986 (degree = 9 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5398 (degree = 2 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_3646 (degree = 1 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_3478 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_9 (degree = 3 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/ten.2-1.png" width="1152" /></p>
+<pre class="r"><code>hot_otus &lt;- graph_hot_otus(gr_bagged_negative)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_4161 (degree = 5 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_8 (degree = 7 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_6 (degree = 10 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_3505 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_64 (degree = 4 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_21 (degree = 4 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/ten.2-2.png" width="1152" /></p>
+<pre class="r"><code>hot_otus &lt;- graph_hot_otus(gr_caged_negative)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_5398 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4036 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5302 (degree = 4 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_2168 (degree = 2 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4938 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_20 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_44 (degree = 3 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/ten.2-3.png" width="1152" /></p>
+</div>
+</div>
+<div id="networks-with-combined-treatments" class="section level2">
+<h2>Networks with Combined Treatments</h2>
+<p>We will now look at all treatments together. Note that data points from Bird samples have already been removed.</p>
+<div id="positive-weights-1" class="section level3">
+<h3>Positive Weights</h3>
+<pre class="r"><code>trimmed_all_positive &lt;- trimmed_positive_weights[, -1]
+gr_trimmed_all_positive &lt;- graph.data.frame(trimmed_all_positive, directed = FALSE)</code></pre>
+<p>Because all the treatments are being combined into one graph, there can be multiple (parallel) edges between OTUs. The clustering algorithm we have been using requires that there not be multiple edges between OTUs. We will collapse multiple edges by taking their mean - that is the mean correlation of the two OTUs across all treatments. (Are there potential problems with this collapsing rule?)</p>
+<pre class="r"><code>gr_trimmed_all_positive &lt;- simplify(gr_trimmed_all_positive, 
+                                    edge.attr.comb = &quot;mean&quot;)
+graph_hot_otus(gr_trimmed_all_positive)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_20 (degree = 51 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_21 (degree = 44 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4036 (degree = 23 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_66 (degree = 2 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_38 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_338 (degree = 7 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/tap.2-1.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.38412258553213&quot;</code></pre>
+<p>What’s interesting here is that the graph has a lot of “spokes,” which hints at important OTUs.</p>
+</div>
+<div id="negative-weights-1" class="section level3">
+<h3>Negative Weights</h3>
+<pre class="r"><code>trimmed_all_negative &lt;- trimmed_negative_weights[, -1]
+trimmed_all_negative[[3]] &lt;- abs(trimmed_all_negative[[3]])
+gr_trimmed_all_negative &lt;- graph.data.frame(trimmed_all_negative, directed = FALSE)
+gr_trimmed_all_negative &lt;- simplify(gr_trimmed_all_negative, 
+                                    edge.attr.comb = &quot;mean&quot;)
+
+graph_hot_otus(gr_trimmed_all_negative)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_4337 (degree = 7 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_3505 (degree = 8 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_6 (degree = 18 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_64 (degree = 10 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5629 (degree = 8 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4036 (degree = 9 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_44 (degree = 3 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/tan.1-1.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.345041551246537&quot;</code></pre>
+</div>
+</div>
+<div id="complete-data-all-species" class="section level2">
+<h2>Complete Data (all species)</h2>
+<p>We reproduce the above analysis on the complete data sat. Again, we separate the data into positive and negative networks:</p>
+<pre class="r"><code>complete_positive_weights &lt;- complete_data[complete_data[[&#39;rho&#39;]] &gt; 0]</code></pre>
+<pre class="r"><code>complete_negative_weights &lt;- complete_data[complete_data[[&#39;rho&#39;]] &lt; 0]</code></pre>
+<div id="positive-weights-2" class="section level3">
+<h3>Positive Weights</h3>
+<pre class="r"><code>complete_exposed_positive &lt;- complete_positive_weights[treatment == &quot;Exposed&quot;][,-1]
+gr_complete_exposed_positive &lt;- graph.data.frame(complete_exposed_positive, directed = FALSE)
+
+complete_caged_positive &lt;- complete_positive_weights[treatment == &quot;Caged&quot;][,-1]
+gr_complete_caged_positive &lt;- graph.data.frame(complete_caged_positive, directed = FALSE)
+
+complete_bagged_positive &lt;- complete_positive_weights[treatment == &quot;Bagged&quot;][,-1]
+gr_complete_bagged_positive &lt;- graph.data.frame(complete_bagged_positive, directed = FALSE)
+
+graph_hot_otus(gr_complete_exposed_positive)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_18 (degree = 14 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5806 (degree = 27 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5498 (degree = 22 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_1759 (degree = 7 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_6 (degree = 11 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/cep.1-1.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.415087454793783&quot;</code></pre>
+<pre class="r"><code>graph_hot_otus(gr_complete_caged_positive)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_4036 (degree = 13 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_42 (degree = 22 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5398 (degree = 31 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4218 (degree = 13 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/cep.1-2.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.353623308939668&quot;</code></pre>
+<pre class="r"><code>graph_hot_otus(gr_complete_bagged_positive)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_43 (degree = 18 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5 (degree = 6 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_21 (degree = 28 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4036 (degree = 2 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_13 (degree = 15 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/cep.1-3.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.447362654613719&quot;</code></pre>
+</div>
+<div id="negative-weights-2" class="section level3">
+<h3>Negative Weights</h3>
+<pre class="r"><code>complete_exposed_negative &lt;- complete_negative_weights[treatment == &quot;Exposed&quot;][,-1]
+complete_exposed_negative[[3]] &lt;- abs(complete_exposed_negative[[3]])
+gr_complete_exposed_negative &lt;- graph.data.frame(complete_exposed_negative, directed = FALSE)
+
+complete_caged_negative &lt;- complete_negative_weights[treatment == &quot;Caged&quot;][,-1]
+complete_caged_negative[[3]] &lt;- abs(complete_caged_negative[[3]])
+gr_complete_caged_negative &lt;- graph.data.frame(complete_caged_negative, directed = FALSE)
+
+complete_bagged_negative &lt;- complete_negative_weights[treatment == &quot;Bagged&quot;][,-1]
+complete_bagged_negative[[3]] &lt;- abs(complete_bagged_negative[[3]])
+gr_complete_bagged_negative &lt;- graph.data.frame(complete_bagged_negative, directed = FALSE)</code></pre>
+<pre class="r"><code>graph_hot_otus(gr_complete_exposed_negative)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_172 (degree = 8 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4153 (degree = 4 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_3986 (degree = 7 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_6 (degree = 12 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_22 (degree = 8 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_49 (degree = 2 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5755 (degree = 2 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_214 (degree = 2 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/cen.2-1.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.41341566635888&quot;</code></pre>
+<pre class="r"><code>graph_hot_otus(gr_complete_caged_negative)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_22 (degree = 4 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4161 (degree = 10 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4227 (degree = 10 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_2168 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5 (degree = 10 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5806 (degree = 5 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_28 (degree = 4 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5702 (degree = 1 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/cen.2-2.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.470583752476757&quot;</code></pre>
+<pre class="r"><code>graph_hot_otus(gr_complete_bagged_negative)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_8 (degree = 5 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4938 (degree = 7 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5 (degree = 13 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4036 (degree = 5 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_172 (degree = 2 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5098 (degree = 2 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_2168 (degree = 5 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/cen.2-3.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.447864925492709&quot;</code></pre>
+</div>
+</div>
+<div id="networks-with-combined-treatments-1" class="section level2">
+<h2>Networks with Combined Treatments</h2>
+<div id="positive-weights-3" class="section level3">
+<h3>Positive Weights</h3>
+<pre class="r"><code>complete_all_positive &lt;- complete_positive_weights[, -1]
+gr_complete_all_positive &lt;- graph.data.frame(complete_all_positive, directed = FALSE)
+gr_complete_all_positive &lt;- simplify(gr_complete_all_positive, 
+                                    edge.attr.comb = &quot;mean&quot;)
+
+graph_hot_otus(gr_complete_all_positive)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_4218 (degree = 14 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_45 (degree = 14 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_3425 (degree = 2 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_42 (degree = 45 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_21 (degree = 44 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_6 (degree = 11 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/cap.1-1.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.309733683236746&quot;</code></pre>
+</div>
+<div id="negative-weights-3" class="section level3">
+<h3>Negative Weights</h3>
+<pre class="r"><code>complete_all_negative &lt;- complete_negative_weights[, -1]
+complete_all_negative[[3]] &lt;- abs(complete_all_negative[[3]])
+gr_complete_all_negative &lt;- graph.data.frame(complete_all_negative, directed = FALSE)
+gr_complete_all_negative &lt;- simplify(gr_complete_all_negative, 
+                                    edge.attr.comb = &quot;mean&quot;)
+graph_hot_otus(gr_complete_all_negative)</code></pre>
+<pre><code>## [1] &quot;Highest degree OTU was OTU_4227 (degree = 12 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5806 (degree = 12 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_6 (degree = 11 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5 (degree = 22 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5553 (degree = 6 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_5702 (degree = 3 ):&quot;
+## [1] &quot;Highest degree OTU was OTU_4161 (degree = 15 ):&quot;</code></pre>
+<p><img src="bacteria_network_analysis_files/figure-html/can.1-1.png" width="1152" /></p>
+<pre><code>## [1] &quot;modularity of graph = 0.286692084892092&quot;</code></pre>
+</div>
+</div>
+<div id="modularity" class="section level2">
+<h2>Modularity</h2>
+<!-- Collecting all modularity scores: -->
+<!-- ```{r mod.1} -->
+<!-- treatments <- c("tep", "ten", "tcp", "tcn", "tbp", "tbn", "tap", "tan", -->
+<!--                         "cep", "cen", "ccp", "ccn", "cbp", "cbn", "cap", "can") -->
+<!-- # scores <- c(tep.mod, ten.mod, tcp.mod, tcn.mod, tbp.mod, tbn.mod, tap.mod, tan.mod, -->
+<!--             # cep.mod, cen.mod, ccp.mod, ccn.mod, cbp.mod, cbn.mod, cap.mod, can.mod) -->
+<!-- mod.scores <- data.table(treatments, scores) -->
+<!-- library(ggplot2, warn.conflicts = FALSE) -->
+<!-- ggplot(mod.scores, aes(x = "", y = scores)) + geom_boxplot() + -->
+<!-- geom_jitter(shape = 16, aes(color = treatments)) -->
+<!-- ``` -->
+</div>
+
+<p><br>
+<br>
+
+<strong><a href="https://github.com/pommevilla">Paul Villanueva</a></strong> and 
+<strong><a href="https://github.com/sdsmith1390">Schuyler Smith</a></strong>
+<br>
+Ph.D. Students - Bioinformatics and Computational Biology<br>
+Iowa State University.  Ames, IA.</p>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,266 @@
+---
+title: "Bacteria Network Analysis"
+---
+<script>
+$(document).ready(function() {
+  $items = $('div#TOC li');
+  $items.each(function(idx) {
+    num_ul = $(this).parentsUntil('#TOC').length;
+    $(this).css({'text-indent': num_ul * 10, 'padding-left': 0});
+  });
+});
+</script>
+
+```{r, results='hide', echo=FALSE}
+set.seed(1390)
+knitr::opts_chunk$set(fig.width=12, fig.height=8)
+```
+```{r, message = FALSE, warning = FALSE}
+library(data.table, warn.conflicts = FALSE)
+library(igraph, warn.conflicts = FALSE)
+library(phyloseq, warn.conflicts = FALSE)
+```
+
+## Data Preparation
+
+`taxa` is the look-up table for the OTUs.  `cooccurrence_data` contains pairwise-Spearman correlation ranks for pairs of OTUs.
+
+```{r read_data}
+phylo_data <- readRDS("data/rare_b.rds")
+taxa <- tax_table(phylo_data)
+cooccurrence_data <- data.table(read.table("data/bacteria/bacteria_cooccurrence.tsv", 
+                                           col.names = c("treatment", "OTU_1", "OTU_2", "rho", "p")))
+```
+
+We process `coocurrence_data` by removing OTU interactions with non-significant $\rho$ values by filtering out those with a $p$-value less than $0.05$, then filtering out cyanobacteria and choloroplast data, as well as all observations from bird samples:
+
+```{r complete_data}
+cooccurrence_data <- cooccurrence_data[p <= 0.1, -5]      # Remove p-values from table
+cooccurrence_data <- cooccurrence_data[order(treatment, OTU_1, OTU_2)]
+taxa <- subset_taxa(taxa, !(Order %in% c("Cyanobacteria","Chloroplast")))
+complete_data <- cooccurrence_data[OTU_1 %in% rownames(taxa) | OTU_2 %in% rownames(taxa)]
+
+bird_data <- cooccurrence_data[treatment == "Bird", ]
+complete_data <- cooccurrence_data[treatment != "Bird", ]
+```
+
+We can then remove all edges that are $\textit{not}$ connected to the indicated OTUs of interest:
+
+```{r trim_data}
+otus_of_interest <- c("Acinetobacter", "Gluconobacter", "Neokomagataea", "erwinia", "Pantoea", "resenbergiella", "Asaia", "Lactobacillus", "Pseudomonas")
+otus_of_interest <- taxa[apply(taxa, 1, FUN = function(x){any(x %in% otus_of_interest)}),]
+trimmed_data <- cooccurrence_data[OTU_1 %in% rownames(otus_of_interest) | OTU_2 %in% rownames(otus_of_interest)]
+```
+
+We seperate the coocurrence data into a positive and negative group, as we can't give equal weight between the two types of associations.
+
+```{r}
+trimmed_positive_weights <- trimmed_data[trimmed_data[['rho']] > 0]
+```
+
+```{r}
+trimmed_negative_weights <- trimmed_data[trimmed_data[['rho']] < 0]
+```
+
+We'll look at the positive and negative networks for each of the three treatments, as well as when all the treatments are combined together.
+
+## Networks for Species of Interest
+
+### Positive weights 
+We create a directed graph weighted by Spearman correlation for the Exposed treatment for those OTUs that are positively correlated to each other:  
+```{r tep.1}
+exposed_data_positive <- trimmed_positive_weights[treatment == "Exposed"][,-1]
+gr_exposed_positive <- graph.data.frame(exposed_data_positive, directed = FALSE)
+plot(gr_exposed_positive, vertex.size = 3,
+     vertex.label = NA)
+caged_data_positive <- trimmed_positive_weights[treatment == "Caged"][,-1]
+gr_caged_positive <- graph.data.frame(caged_data_positive, directed = FALSE)
+bagged_data_positive <- trimmed_positive_weights[treatment == "Bagged"][,-1]
+gr_bagged_positive <- graph.data.frame(bagged_data_positive, directed = FALSE)
+```
+
+To determine communities, we use `cluster_fast_greedy`, which does greedy (local) optimization of the graph's modularity score.  For each of the communities, we list the highest degree OTU within that community, as well as the other OTUs within it.
+
+```{r tep.2, hide = TRUE}
+graph_hot_otus <- function(graph_object){
+  communities_object <- cluster_fast_greedy(graph_object, weights = E(graph_object)$rho)
+  hot_otus <- vector
+  for (community in communities(communities_object)){
+    sub_graph <- induced.subgraph(graph = graph_object, 
+                                    v = community, impl = "auto")
+    highest_degree_otu <- V(sub_graph)[which.max(degree(sub_graph))]$name
+    hot_otus <- c(hot_otus, highest_degree_otu)
+    print(paste("Highest degree OTU was", highest_degree_otu, "(degree =",  
+              degree(sub_graph, highest_degree_otu), "):"))
+  }
+  plot(communities_object, graph_object, 
+     layout = layout.fruchterman.reingold(graph_object),
+     rescaled = TRUE,
+     vertex.size = ifelse(V(graph_object) %in% hot_otus, 5, 1), 
+     vertex.label = ifelse(V(graph_object) %in% hot_otus, V(graph_object)$id, NA),
+     vertex.label.cex = 2
+     )
+  return(paste("modularity of graph = ", modularity(graph_object, membership(communities_object)), sep=""))
+}
+```
+
+```{r positive_graphs}
+graph_hot_otus(gr_exposed_positive)
+graph_hot_otus(gr_bagged_positive)
+graph_hot_otus(gr_caged_positive)
+```
+
+### Negative Weights
+
+We repeat the above process for the negatively correlated OTUs:
+
+```{r negatives}
+exposed_data_negative <- trimmed_negative_weights[treatment == "Exposed"][, -1]
+exposed_data_negative[[3]] <- abs(exposed_data_negative[[3]])
+gr_exposed_negative <- graph.data.frame(exposed_data_negative, directed = FALSE)
+
+bagged_data_negative <- trimmed_negative_weights[treatment == "Bagged"][, -1]
+bagged_data_negative[[3]] <- abs(bagged_data_negative[[3]])
+gr_bagged_negative <- graph.data.frame(bagged_data_negative, directed = FALSE)
+
+caged_data_negative <- trimmed_negative_weights[treatment == "Caged"][, -1]
+caged_data_negative[[3]] <- abs(caged_data_negative[[3]])
+gr_caged_negative <- graph.data.frame(caged_data_negative, directed = FALSE)
+
+
+```
+
+
+```{r ten.2}
+hot_otus <- graph_hot_otus(gr_exposed_negative)
+hot_otus <- graph_hot_otus(gr_bagged_negative)
+hot_otus <- graph_hot_otus(gr_caged_negative)
+```
+
+## Networks with Combined Treatments
+
+We will now look at all treatments together.  Note that data points from Bird samples have already been removed.
+
+### Positive Weights
+
+```{r tap.1, error = TRUE}
+trimmed_all_positive <- trimmed_positive_weights[, -1]
+gr_trimmed_all_positive <- graph.data.frame(trimmed_all_positive, directed = FALSE)
+```
+
+Because all the treatments are being combined into one graph, there can be multiple (parallel) edges between OTUs.  The clustering algorithm we have been using requires that there not be multiple edges between OTUs. We will collapse multiple edges by taking their mean - that is the mean correlation of the two OTUs across all treatments. (Are there potential problems with this collapsing rule?) 
+
+```{r tap.2}
+gr_trimmed_all_positive <- simplify(gr_trimmed_all_positive, 
+                                    edge.attr.comb = "mean")
+graph_hot_otus(gr_trimmed_all_positive)
+```
+
+What's interesting here is that the graph has a lot of "spokes," which hints at important OTUs.
+
+### Negative Weights
+
+```{r tan.1}
+trimmed_all_negative <- trimmed_negative_weights[, -1]
+trimmed_all_negative[[3]] <- abs(trimmed_all_negative[[3]])
+gr_trimmed_all_negative <- graph.data.frame(trimmed_all_negative, directed = FALSE)
+gr_trimmed_all_negative <- simplify(gr_trimmed_all_negative, 
+                                    edge.attr.comb = "mean")
+
+graph_hot_otus(gr_trimmed_all_negative)
+```
+
+## Complete Data (all species)
+
+We reproduce the above analysis on the complete data sat.  Again, we separate the data into positive and negative networks:
+
+```{r cd.1}
+complete_positive_weights <- complete_data[complete_data[['rho']] > 0]
+```
+
+```{r cd.2}
+complete_negative_weights <- complete_data[complete_data[['rho']] < 0]
+```
+
+### Positive Weights 
+```{r cep.1}
+complete_exposed_positive <- complete_positive_weights[treatment == "Exposed"][,-1]
+gr_complete_exposed_positive <- graph.data.frame(complete_exposed_positive, directed = FALSE)
+
+complete_caged_positive <- complete_positive_weights[treatment == "Caged"][,-1]
+gr_complete_caged_positive <- graph.data.frame(complete_caged_positive, directed = FALSE)
+
+complete_bagged_positive <- complete_positive_weights[treatment == "Bagged"][,-1]
+gr_complete_bagged_positive <- graph.data.frame(complete_bagged_positive, directed = FALSE)
+
+graph_hot_otus(gr_complete_exposed_positive)
+graph_hot_otus(gr_complete_caged_positive)
+graph_hot_otus(gr_complete_bagged_positive)
+```
+
+### Negative Weights
+
+```{r cen.1}
+complete_exposed_negative <- complete_negative_weights[treatment == "Exposed"][,-1]
+complete_exposed_negative[[3]] <- abs(complete_exposed_negative[[3]])
+gr_complete_exposed_negative <- graph.data.frame(complete_exposed_negative, directed = FALSE)
+
+complete_caged_negative <- complete_negative_weights[treatment == "Caged"][,-1]
+complete_caged_negative[[3]] <- abs(complete_caged_negative[[3]])
+gr_complete_caged_negative <- graph.data.frame(complete_caged_negative, directed = FALSE)
+
+complete_bagged_negative <- complete_negative_weights[treatment == "Bagged"][,-1]
+complete_bagged_negative[[3]] <- abs(complete_bagged_negative[[3]])
+gr_complete_bagged_negative <- graph.data.frame(complete_bagged_negative, directed = FALSE)
+```
+
+```{r cen.2}
+graph_hot_otus(gr_complete_exposed_negative)
+graph_hot_otus(gr_complete_caged_negative)
+graph_hot_otus(gr_complete_bagged_negative)
+```
+
+## Networks with Combined Treatments
+
+### Positive Weights
+
+```{r cap.1}
+complete_all_positive <- complete_positive_weights[, -1]
+gr_complete_all_positive <- graph.data.frame(complete_all_positive, directed = FALSE)
+gr_complete_all_positive <- simplify(gr_complete_all_positive, 
+                                    edge.attr.comb = "mean")
+
+graph_hot_otus(gr_complete_all_positive)
+```
+
+### Negative Weights
+
+
+```{r, can.1}
+complete_all_negative <- complete_negative_weights[, -1]
+complete_all_negative[[3]] <- abs(complete_all_negative[[3]])
+gr_complete_all_negative <- graph.data.frame(complete_all_negative, directed = FALSE)
+gr_complete_all_negative <- simplify(gr_complete_all_negative, 
+                                    edge.attr.comb = "mean")
+graph_hot_otus(gr_complete_all_negative)
+
+
+```
+
+## Modularity
+
+<!-- Collecting all modularity scores: -->
+
+<!-- ```{r mod.1} -->
+<!-- treatments <- c("tep", "ten", "tcp", "tcn", "tbp", "tbn", "tap", "tan", -->
+<!--                         "cep", "cen", "ccp", "ccn", "cbp", "cbn", "cap", "can") -->
+<!-- # scores <- c(tep.mod, ten.mod, tcp.mod, tcn.mod, tbp.mod, tbn.mod, tap.mod, tan.mod, -->
+<!--             # cep.mod, cen.mod, ccp.mod, ccn.mod, cbp.mod, cbn.mod, cap.mod, can.mod) -->
+<!-- mod.scores <- data.table(treatments, scores) -->
+
+
+<!-- library(ggplot2, warn.conflicts = FALSE) -->
+<!-- ggplot(mod.scores, aes(x = "", y = scores)) + geom_boxplot() + -->
+<!-- geom_jitter(shape = 16, aes(color = treatments)) -->
+<!-- ``` -->
+

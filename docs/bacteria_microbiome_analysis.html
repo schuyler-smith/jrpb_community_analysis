@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Differential Abundance Analysis of Bacteria</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cerulean.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Project Overview</a>
+</li>
+<li>
+  <a href="bacteria_cooccurr_prep.html">Co-Occurrence</a>
+</li>
+<li>
+  <a href="bacteria_microbiome_analysis.html">Microbiome Analysis</a>
+</li>
+<li>
+  <a href="bacteria_network_analysis.html">Network Analysis</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Differential Abundance Analysis of Bacteria</h1>
+
+</div>
+
+
+<script>
+$(document).ready(function() {
+  $items = $('div#TOC li');
+  $items.each(function(idx) {
+    num_ul = $(this).parentsUntil('#TOC').length;
+    $(this).css({'text-indent': num_ul * 10, 'padding-left': 0});
+  });
+});
+</script>
+<pre class="r"><code>library(phyloseq, warn.conflicts = FALSE)
+library(data.table, warn.conflicts = FALSE)
+library(RColorBrewer, warn.conflicts = FALSE)
+library(ggplot2, warn.conflicts = FALSE)
+library(igraph, warn.conflicts = FALSE)
+library(vegan, warn.conflicts = FALSE)
+library(vegetarian, warn.conflicts = FALSE)</code></pre>
+<p>I have a filter to remove samples with total abundances of less than 200.. this isn’t necessary with this data, since it has been rarefied to 500, btu is good practice none-the-less. Also I remove taxa that have abundance less than 2 across all samples. Again, the choice to do this is dependent on your interests in the data.</p>
+<pre class="r"><code>phylo.data &lt;- readRDS(&quot;data/rare_b.rds&quot;)
+phylo.data &lt;- prune_samples(sample_sums(phylo.data)&gt;=200, phylo.data)
+phylo.data &lt;- filter_taxa(phylo.data, function(x) sum(x) &gt;= 2, T)
+metadata &lt;- sample_data(phylo.data)</code></pre>
+<div id="alpha-diversity" class="section level2">
+<h2>Alpha Diversity</h2>
+<p>Calculated using Shannon index <span class="math inline">\(H = \sum_{i=1}^{R}\ln{p_{i}}\)</span>, it is seen that the treatments allowing more dispersal show greater diversity (increased diverstiy being values less than <span class="math inline">\(1\)</span>).</p>
+<pre class="r"><code>richness &lt;- plot_richness(phylo.data, measures = &quot;Shannon&quot;)$data
+p &lt;- ggplot(richness, aes(x = Treatment, y = value), color = Treatment)
+  p &lt;- p + geom_boxplot(aes(color = Treatment), position = &quot;dodge&quot;)  
+  p &lt;- p + ggtitle(&quot;Alpha-Diversity of Treatments&quot;)
+  p &lt;- p + ylab(&quot;Shannon Alpha-Diversity&quot;)
+  p &lt;- p + theme(plot.title = element_text(hjust = 0.5),
+                 axis.title.x = element_blank(),
+                 legend.position=&quot;none&quot;)
+p</code></pre>
+<p><img src="bacteria_microbiome_analysis_files/figure-html/alpha-diversity-1.png" width="1152" /></p>
+</div>
+<div id="normalization" class="section level2">
+<h2>Normalization</h2>
+<p>The data has already been rarefied to 500, so normalization is not necessary, but normally would be with raw data.</p>
+</div>
+<div id="ordination" class="section level2">
+<h2>Ordination</h2>
+<p>MDS plots show us the variation between samples and when looked at by treaments, shows us how much variation exists between each. The circles attempt to show a cluster for the center of the treatment, and we can see how they differentiate, though not to a great extent.</p>
+<pre class="r"><code>source(&quot;scripts/ggplot.NMDS.ellipse.R&quot;)
+abundances &lt;- otu_table(phylo.data)
+getPalette = colorRampPalette(brewer.pal(8, &quot;Dark2&quot;)); colorCount = length(unique(metadata$Treatment)); colors = getPalette(colorCount); theme_set(theme_bw())
+totu&lt;-t(abundances)
+mds &lt;- metaMDS(totu, autotransform = F, k = 2, trymax = 100)</code></pre>
+<pre class="r"><code>ggplot.NMDS.ellipse(mds, metadata$Treatment, colors)</code></pre>
+<p><img src="bacteria_microbiome_analysis_files/figure-html/ordinaiton-plot-1.png" width="1152" /></p>
+</div>
+<div id="analysis-of-variance" class="section level2">
+<h2>Analysis of variance</h2>
+<p>Adonis is a method commonly used for ecological systems. It runs permutations of subsets of the data and calculates distances from the cnetroid using in the same manner as ANOVA. And thusly, we find that none of the treatments actually show statistically significant effects on the bacterial community.</p>
+<pre class="r"><code>rela.dist &lt;- phyloseq::distance(phylo.data, &quot;bray&quot;)
+si &lt;- data.frame(metadata)
+pairs &lt;- t(combn(unique(si$Treatment), 2))
+df &lt;- data.frame()         
+for (i in 1:nrow(pairs)){
+    temp.rowname &lt;- paste(pairs[i, 1], pairs[i, 2], sep=&quot;::&quot;)
+    temp.phy &lt;- subset_samples(phylo.data, Treatment %in% pairs[i, ])
+    temp.phy &lt;- prune_taxa(taxa_sums(temp.phy) &gt; 0, temp.phy)
+    temp.dist &lt;- phyloseq::distance(temp.phy, &quot;bray&quot;)
+    temp.result &lt;- adonis(temp.dist ~ Treatment, perm=9999, as(sample_data(temp.phy), &quot;data.frame&quot;))
+    temp.df &lt;- data.frame(temp.rowname, temp.result$aov.tab[4][1, ], temp.result$aov.tab[5][1, ], temp.result$aov.tab[6][1, ])
+    df &lt;- rbind(df, temp.df)
+}
+names(df)&lt;-c(&quot;factor&quot;, &quot;rela.F.model&quot;, &quot;rela.adonis_R2&quot;, &quot;rela.Pr(&gt;F)&quot;)
+df</code></pre>
+<pre><code>##            factor rela.F.model rela.adonis_R2 rela.Pr(&gt;F)
+## 1    Bird::Bagged    34.360148     0.22404874      0.0001
+## 2   Bird::Exposed    17.684383     0.10609502      0.0001
+## 3     Bird::Caged    25.295436     0.20028781      0.0001
+## 4 Bagged::Exposed    15.622980     0.09432857      0.0001
+## 5   Bagged::Caged     1.465155     0.01416085      0.1468
+## 6  Exposed::Caged     8.133569     0.05804154      0.0001</code></pre>
+</div>
+<div id="beta-diversity" class="section level2">
+<h2>Beta-Diversity</h2>
+<p>Using the <span class="math inline">\(\beta\)</span>-diversity function published in Vannette et al, We caclulated the <span class="math inline">\(\beta\)</span>-diversity for each treatment to try to replicate their results.</p>
+<pre class="r"><code>source(&quot;scripts/mds.envfit.arrows.R&quot;);source(&quot;scripts/ordi.sf.R&quot;);source(&quot;scripts/Vannette.R&quot;);source(&quot;scripts/Tello.R&quot;);
+caged &lt;- subset_samples(phylo.data, Treatment==&quot;Caged&quot;)
+caged &lt;- prune_taxa(taxa_sums(caged) &gt; 0, caged)
+bagged &lt;- subset_samples(phylo.data, Treatment==&quot;Bagged&quot;)
+bagged &lt;- prune_taxa(taxa_sums(bagged) &gt; 0, bagged)
+exposed &lt;- subset_samples(phylo.data, Treatment==&quot;Exposed&quot;)
+exposed &lt;- prune_taxa(taxa_sums(exposed) &gt; 0, exposed)</code></pre>
+<pre class="r"><code>bses_bagged &lt;- beta.ses.list(bagged)
+names(bses_bagged) &lt;- rownames(sample_data(bagged))
+bses_caged &lt;- beta.ses.list(caged)
+names(bses_caged) &lt;- rownames(sample_data(caged))
+bses_exposed &lt;- beta.ses.list(exposed)
+names(bses_exposed) &lt;- rownames(sample_data(exposed))
+betas &lt;- list(bses_bagged,bses_caged,bses_exposed)
+names(betas) &lt;- c(&quot;bagged&quot;,&quot;caged&quot;,&quot;exposed&quot;)
+saveRDS(betas, &quot;data/bacteria/beta_diversities.RDS&quot;)</code></pre>
+<pre class="r"><code>betas &lt;- readRDS(&quot;data/bacteria/beta_diversities.RDS&quot;)
+
+bses_bagged &lt;- betas$bagged
+bses_caged &lt;- betas$caged
+bses_exposed &lt;- betas$exposed</code></pre>
+<pre class="r"><code>getPalette = colorRampPalette(brewer.pal(8, &quot;Dark2&quot;))
+colorCount = length(unique(sample_data(phylo.data)$Treatment))
+colors = getPalette(colorCount)
+
+datta &lt;- melt(c(data.frame(Bagged = bses_bagged), data.frame(Caged = bses_caged), data.frame(Exposed = bses_exposed))); colnames(datta) &lt;- c(&#39;Beta&#39;, &#39;Treatment&#39;)
+
+p &lt;- ggplot(datta, aes(x = Treatment, y = Beta), color = Treatment)
+  p &lt;- p + geom_boxplot(aes(color = Treatment), position = &quot;dodge&quot;)  
+  p &lt;- p + ggtitle(&quot;Beta-Diversity of Treatments&quot;)
+  p &lt;- p + ylab(&quot;&quot;)
+  p &lt;- p + theme(plot.title = element_text(hjust = 0.5),
+                 axis.title.x = element_blank(),
+                 legend.position=&quot;none&quot;)
+p</code></pre>
+<p><img src="bacteria_microbiome_analysis_files/figure-html/plot-beta-1.png" width="1152" /></p>
+</div>
+
+<p><br>
+<br>
+
+<strong><a href="https://github.com/pommevilla">Paul Villanueva</a></strong> and 
+<strong><a href="https://github.com/sdsmith1390">Schuyler Smith</a></strong>
+<br>
+Ph.D. Students - Bioinformatics and Computational Biology<br>
+Iowa State University.  Ames, IA.</p>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
